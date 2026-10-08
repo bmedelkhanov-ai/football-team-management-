@@ -1,0 +1,33 @@
+@startuml
+left to right direction
+actor "Жаттықтырушы" as Coach
+actor "Футболшы" as Player
+actor "Әкімші" as Admin
+rectangle "Футбол командасын басқару ақпараттық жүйесі" {
+  usecase "Жүйеге кіру" as Login
+  usecase "Жаттығу құру" as Create
+  usecase "Хабарлама жіберу" as Send
+  usecase "Қатысушылар тізімін көру" as Members
+  usecase "Қатысуды белгілеу" as Attendance
+  usecase "Команда құрамын басқару" as Team
+  usecase "Статистиканы көру" as Stats
+  usecase "Жаттығу кестесін көру" as Schedule
+  usecase "Қатысуды растау" as Confirm
+  usecase "Өз статистикасын көру" as PersonalStats
+  usecase "Хабарлама алу" as Receive
+  usecase "Пайдаланушыларды басқару" as Users
+}
+Coach -- Login
+Coach -- Create
+Coach -- Members
+Coach -- Attendance
+Coach -- Team
+Coach -- Stats
+Player -- Login
+Player -- Schedule
+Player -- Confirm
+Player -- PersonalStats
+Player -- Receive
+Admin -- Users
+Create ..> Send : <<include>>
+@enduml
