@@ -143,4 +143,3 @@ SELECT * FROM Players;
 
 -- Барлық жаттығулар
 SELECT * FROM Trainings;
-test
