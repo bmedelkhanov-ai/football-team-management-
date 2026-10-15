@@ -1,145 +1,183 @@
+PRAGMA foreign_keys = ON;
 
-CREATE TABLE Teams (
-    TeamID INTEGER PRIMARY KEY AUTOINCREMENT,
-    TeamName TEXT NOT NULL,
-    CoachName TEXT NOT NULL
+-- 1. Рөлдер
+CREATE TABLE IF NOT EXISTS roles (
+    role_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    role_name TEXT NOT NULL UNIQUE
 );
 
-CREATE TABLE Players (
-    PlayerID INTEGER PRIMARY KEY AUTOINCREMENT,
-    FullName TEXT NOT NULL,
-    Age INTEGER,
-    Position TEXT,
-    TeamID INTEGER,
-    FOREIGN KEY (TeamID) REFERENCES Teams(TeamID)
+-- 2. Қолданушылар
+CREATE TABLE IF NOT EXISTS users (
+    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    full_name TEXT NOT NULL,
+    username TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    role_id INTEGER NOT NULL,
+    phone TEXT,
+    email TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (role_id) REFERENCES roles(role_id)
 );
 
-CREATE TABLE Trainings (
-    TrainingID INTEGER PRIMARY KEY AUTOINCREMENT,
-    TeamID INTEGER,
-    TrainingDate TEXT NOT NULL,
-    Location TEXT,
-    FOREIGN KEY (TeamID) REFERENCES Teams(TeamID)
+-- 3. Командалар
+CREATE TABLE IF NOT EXISTS teams (
+    team_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    team_name TEXT NOT NULL,
+    coach_id INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (coach_id) REFERENCES users(user_id)
 );
 
--- 2. КОМАНДАЛАРДЫ ҚОСУ
+-- 4. Команда мүшелері
+CREATE TABLE IF NOT EXISTS team_members (
+    member_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    team_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    position TEXT,
+    join_date DATE,
+    FOREIGN KEY (team_id) REFERENCES teams(team_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
 
-INSERT INTO Teams (TeamName, CoachName) VALUES
-('Қайрат', 'Асқар Сейітов'),
-('Астана', 'Ерлан Қасымов'),
-('Ордабасы', 'Нұрлан Сейітов'),
-('Ақтөбе', 'Асқар Жұмабаев'),
-('Тобыл', 'Данияр Әбдірахман'),
-('Елімай', 'Марат Омаров'),
-('Жетісу', 'Болат Әлиев'),
-('Қызылжар', 'Руслан Төлегенов'),
-('Атырау', 'Мұрат Нұртаев'),
-('Оқжетпес', 'Самат Бекенов'),
-('Ұлытау', 'Арман Ермеков');
+-- 5. Жаттығулар
+CREATE TABLE IF NOT EXISTS trainings (
+    training_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    team_id INTEGER NOT NULL,
+    coach_id INTEGER NOT NULL,
+    training_date DATE NOT NULL,
+    training_time TIME NOT NULL,
+    location TEXT,
+    description TEXT,
+    FOREIGN KEY (team_id) REFERENCES teams(team_id),
+    FOREIGN KEY (coach_id) REFERENCES users(user_id)
+);
 
--- 3. ФУТБОЛШЫЛАРДЫ ҚОСУ
+-- 6. Қатысу
+CREATE TABLE IF NOT EXISTS training_attendance (
+    attendance_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    training_id INTEGER NOT NULL,
+    player_id INTEGER NOT NULL,
+    status TEXT NOT NULL
+      CHECK(status IN ('Қатысты', 'Қатыспады', 'Кешікті')),
+    note TEXT,
+    FOREIGN KEY (training_id) REFERENCES trainings(training_id),
+    FOREIGN KEY (player_id) REFERENCES users(user_id)
+);
 
-INSERT INTO Players (FullName, Age, Position, TeamID) VALUES
+-- 7. Матчтар
+CREATE TABLE IF NOT EXISTS matches (
+    match_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    team_id INTEGER NOT NULL,
+    opponent_name TEXT NOT NULL,
+    match_date DATE NOT NULL,
+    location TEXT,
+    result TEXT,
+    goals_scored INTEGER DEFAULT 0,
+    goals_conceded INTEGER DEFAULT 0,
+    FOREIGN KEY (team_id) REFERENCES teams(team_id)
+);
 
--- Қайрат
-('Бағыжан Меделханов', 19, 'Шабуылшы', 1),
-('Алихан Ермеков', 21, 'Қақпашы', 1),
-('Нұрсұлтан Әлиев', 23, 'Қорғаушы', 1),
-('Данияр Омаров', 20, 'Жартылай қорғаушы', 1),
+-- 8. Ойыншылар статистикасы
+CREATE TABLE IF NOT EXISTS player_statistics (
+    stat_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_id INTEGER NOT NULL,
+    match_id INTEGER,
+    goals INTEGER DEFAULT 0,
+    assists INTEGER DEFAULT 0,
+    yellow_cards INTEGER DEFAULT 0,
+    red_cards INTEGER DEFAULT 0,
+    minutes_played INTEGER DEFAULT 0,
+    FOREIGN KEY (player_id) REFERENCES users(user_id),
+    FOREIGN KEY (match_id) REFERENCES matches(match_id)
+);
 
--- Астана
-('Арман Қасымов', 22, 'Шабуылшы', 2),
-('Ерасыл Бекенов', 24, 'Қақпашы', 2),
-('Мирас Сейітов', 19, 'Қорғаушы', 2),
-('Әділет Нұртаев', 21, 'Жартылай қорғаушы', 2),
+-- 9. Хабарламалар
+CREATE TABLE IF NOT EXISTS notifications (
+    notification_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    is_read INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
 
--- Ордабасы
-('Ислам Жұмабаев', 25, 'Шабуылшы', 3),
-('Санжар Әбдірахман', 22, 'Қақпашы', 3),
-('Азамат Төлегенов', 20, 'Қорғаушы', 3),
-('Еркебұлан Мұратов', 23, 'Жартылай қорғаушы', 3),
+-- МӘЛІМЕТТЕРДІ ЕНГІЗУ
 
--- Ақтөбе
-('Бекзат Ермеков', 21, 'Шабуылшы', 4),
-('Тимур Қасенов', 26, 'Қақпашы', 4),
-('Айдос Болатов', 22, 'Қорғаушы', 4),
-('Расул Әлихан', 19, 'Жартылай қорғаушы', 4),
+-- 1. Рөлдер
+INSERT INTO roles VALUES
+(1, 'Жаттықтырушы'),
+(2, 'Футболшы'),
+(3, 'Әкімші');
 
--- Тобыл
-('Мансұр Нұрланов', 24, 'Шабуылшы', 5),
-('Ернар Асқаров', 21, 'Қақпашы', 5),
-('Әлихан Данияров', 23, 'Қорғаушы', 5),
-('Нұрислам Ерланов', 20, 'Жартылай қорғаушы', 5),
+-- 2. Қолданушылар
+-- Құпиясөздер тек оқу мақсатындағы мысалдар
+INSERT INTO users
+(user_id, full_name, username, password, role_id, phone, email)
+VALUES
+(1, 'Арман Қасымов', 'arman', 'demo123', 1, '87010000001', 'arman@example.com'),
+(2, 'Айбек Нұрланов', 'aibek', 'demo123', 2, '87010000002', 'aibek@example.com'),
+(3, 'Данияр Ермеков', 'daniyar', 'demo123', 2, '87010000003', 'daniyar@example.com'),
+(4, 'Ерасыл Болат', 'erassyl', 'demo123', 2, '87010000004', 'erassyl@example.com'),
+(5, 'Нұрсұлтан Әли', 'nursultan', 'demo123', 2, '87010000005', 'nursultan@example.com'),
+(6, 'Мұрат Серік', 'murat', 'demo123', 3, '87010000006', 'murat@example.com');
 
--- Елімай
-('Асылбек Саматов', 25, 'Шабуылшы', 6),
-('Диас Мұратбек', 22, 'Қақпашы', 6),
-('Нұрдәулет Қуаныш', 24, 'Қорғаушы', 6),
-('Ақжол Серік', 21, 'Жартылай қорғаушы', 6),
+-- 3. Командалар
+INSERT INTO teams (team_id, team_name, coach_id) VALUES
+(1, 'Almaty FC', 1),
+(2, 'Almaty Junior', 1);
 
--- Жетісу
-('Ерсұлтан Арман', 20, 'Шабуылшы', 7),
-('Аян Маратұлы', 23, 'Қақпашы', 7),
-('Алишер Болат', 22, 'Қорғаушы', 7),
-('Темірлан Асқар', 19, 'Жартылай қорғаушы', 7),
+-- 4. Команда мүшелері
+INSERT INTO team_members VALUES
+(1, 1, 2, 'Шабуылшы', '2026-09-01'),
+(2, 1, 3, 'Қорғаушы', '2026-09-01'),
+(3, 1, 4, 'Жартылай қорғаушы', '2026-09-02'),
+(4, 2, 5, 'Қақпашы', '2026-09-03');
 
--- Қызылжар
-('Елдос Руслан', 24, 'Шабуылшы', 8),
-('Нұрбек Данияр', 21, 'Қақпашы', 8),
-('Әділ Ермек', 25, 'Қорғаушы', 8),
-('Жандос Нұрлан', 22, 'Жартылай қорғаушы', 8),
+-- 5. Жаттығулар
+INSERT INTO trainings VALUES
+(1, 1, 1, '2026-10-16', '16:00', 'Орталық стадион', 'Жылдамдық жаттығуы'),
+(2, 1, 1, '2026-10-18', '17:00', 'Футбол алаңы', 'Тактикалық жаттығу'),
+(3, 2, 1, '2026-10-20', '15:00', 'Жасөспірімдер алаңы', 'Доппен жұмыс');
 
--- Атырау
-('Бауыржан Ислам', 20, 'Шабуылшы', 9),
-('Мирас Арманұлы', 23, 'Қақпашы', 9),
-('Сұлтан Ержан', 21, 'Қорғаушы', 9),
-('Еркебұлан Самат', 24, 'Жартылай қорғаушы', 9),
+-- 6. Жаттығуға қатысу
+INSERT INTO training_attendance VALUES
+(1, 1, 2, 'Қатысты', 'Белсенді қатысты'),
+(2, 1, 3, 'Қатыспады', 'Ауырып қалды'),
+(3, 1, 4, 'Кешікті', '10 минут кешікті'),
+(4, 2, 2, 'Қатысты', 'Жақсы дайындалды'),
+(5, 3, 5, 'Қатысты', 'Толық қатысты');
 
--- Оқжетпес
-('Нұрәли Дастан', 22, 'Шабуылшы', 10),
-('Асылжан Бекзат', 19, 'Қақпашы', 10),
-('Арсен Талғат', 23, 'Қорғаушы', 10),
-('Нұрсұлтан Марат', 21, 'Жартылай қорғаушы', 10),
+-- 7. Матчтар
+INSERT INTO matches VALUES
+(1, 1, 'Astana FC', '2026-10-10', 'Алматы', 'Жеңіс', 3, 1),
+(2, 1, 'Kairat Junior', '2026-10-12', 'Алматы', 'Тең ойын', 2, 2),
+(3, 2, 'Shymkent FC', '2026-10-14', 'Шымкент', 'Жеңіліс', 1, 2);
 
--- Ұлытау
-('Ерасыл Болат', 25, 'Шабуылшы', 11),
-('Дархан Әли', 22, 'Қақпашы', 11),
-('Айбар Серік', 20, 'Қорғаушы', 11),
-('Азамат Нұрлан', 23, 'Жартылай қорғаушы', 11);
+-- 8. Ойыншы статистикасы
+INSERT INTO player_statistics VALUES
+(1, 2, 1, 2, 1, 0, 0, 90),
+(2, 3, 1, 0, 0, 1, 0, 90),
+(3, 4, 1, 1, 1, 0, 0, 85),
+(4, 2, 2, 1, 0, 0, 0, 90),
+(5, 5, 3, 0, 0, 0, 0, 90);
 
--- 4. ЖАТТЫҒУЛАРДЫ ҚОСУ
+-- 9. Хабарламалар
+INSERT INTO notifications
+(notification_id, user_id, message, is_read)
+VALUES
+(1, 2, 'Ертең сағат 16:00-де жаттығу болады', 0),
+(2, 3, 'Жаттығуға қатысуыңызды растаңыз', 0),
+(3, 4, 'Команда жиналысы өтеді', 1),
+(4, 5, 'Келесі жаттығу 20 қазанда', 0);
 
-INSERT INTO Trainings (TeamID, TrainingDate, Location) VALUES
-(1, '2026-10-16', 'Алматы'),
-(1, '2026-10-18', 'Алматы'),
-(2, '2026-10-16', 'Астана'),
-(2, '2026-10-18', 'Астана'),
-(3, '2026-10-17', 'Шымкент'),
-(3, '2026-10-19', 'Шымкент'),
-(4, '2026-10-17', 'Ақтөбе'),
-(4, '2026-10-20', 'Ақтөбе'),
-(5, '2026-10-18', 'Қостанай'),
-(5, '2026-10-21', 'Қостанай'),
-(6, '2026-10-18', 'Семей'),
-(6, '2026-10-22', 'Семей'),
-(7, '2026-10-19', 'Талдықорған'),
-(7, '2026-10-23', 'Талдықорған'),
-(8, '2026-10-19', 'Петропавл'),
-(8, '2026-10-24', 'Петропавл'),
-(9, '2026-10-20', 'Атырау'),
-(9, '2026-10-25', 'Атырау'),
-(10, '2026-10-20', 'Көкшетау'),
-(10, '2026-10-26', 'Көкшетау'),
-(11, '2026-10-21', 'Жезқазған'),
-(11, '2026-10-27', 'Жезқазған');
+-- БАРЛЫҚ КЕСТЕЛЕРДІ ТЕКСЕРУ
 
--- 5. НӘТИЖЕЛЕР
-
--- Барлық командалар
-SELECT * FROM Teams;
-
--- Барлық футболшылар
-SELECT * FROM Players;
-
--- Барлық жаттығулар
-SELECT * FROM Trainings;
+SELECT * FROM roles;
+SELECT * FROM users;
+SELECT * FROM teams;
+SELECT * FROM team_members;
+SELECT * FROM trainings;
+SELECT * FROM training_attendance;
+SELECT * FROM matches;
+SELECT * FROM player_statistics;
+SELECT * FROM notifications;
