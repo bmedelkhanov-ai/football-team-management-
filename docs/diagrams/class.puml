@@ -1,0 +1,128 @@
+
+@startuml
+title Football Team Management - Class Diagram
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+top to bottom direction
+
+class User {
+  - userId: int
+  - name: String
+  - email: String
+  - password: String
+  - role: String
+  --
+  + login(): boolean
+  + logout(): void
+  + updateProfile(): void
+}
+
+class Coach {
+  - coachId: int
+  - phone: String
+  --
+  + createTraining(): void
+  + viewAttendance(): void
+  + manageTeam(): void
+  + viewStatistics(): void
+}
+
+class Player {
+  - playerId: int
+  - position: String
+  - number: int
+  - birthDate: Date
+  --
+  + viewTraining(): void
+  + confirmAttendance(): void
+  + viewStatistics(): void
+}
+
+class Admin {
+  - adminId: int
+  --
+  + manageUsers(): void
+  + manageRoles(): void
+}
+
+class Team {
+  - teamId: int
+  - name: String
+  - city: String
+  --
+  + addPlayer(): void
+  + removePlayer(): void
+  + viewSquad(): void
+}
+
+class Training {
+  - trainingId: int
+  - date: Date
+  - time: Time
+  - location: String
+  - description: String
+  --
+  + create(): void
+  + update(): void
+  + delete(): void
+}
+
+class Attendance {
+  - attendanceId: int
+  - status: String
+  - date: Date
+  --
+  + confirm(): void
+  + cancel(): void
+  + markPresent(): void
+}
+
+class Match {
+  - matchId: int
+  - date: Date
+  - opponent: String
+  - score: String
+  --
+  + scheduleMatch(): void
+  + updateResult(): void
+}
+
+class Statistics {
+  - statisticsId: int
+  - goals: int
+  - assists: int
+  - matchesPlayed: int
+  --
+  + updateStatistics(): void
+  + viewStatistics(): void
+}
+
+class Schedule {
+  - scheduleId: int
+  - startDate: Date
+  - endDate: Date
+  --
+  + addTraining(): void
+  + viewSchedule(): void
+}
+
+User <|-- Coach
+User <|-- Player
+User <|-- Admin
+
+Coach "1" -- "1" Team : басқарады
+Team "1" -- "0..*" Player : құрамында бар
+Team "1" -- "0..*" Training : өткізеді
+Team "1" -- "0..*" Match : өткізеді
+
+Player "1" -- "0..*" Attendance : қатысады
+Training "1" -- "0..*" Attendance : тіркейді
+
+Player "1" -- "0..*" Statistics : статистикасы
+Match "1" -- "0..*" Statistics : нәтижелері
+
+Training "0..*" -- "1" Schedule : кестеде
+Coach "1" -- "0..*" Training : ұйымдастырады
+
+@enduml
