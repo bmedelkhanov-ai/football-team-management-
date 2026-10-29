@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+    <title>Football Management</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #101827;
+            color: white;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        h1 { color: #4ade80; }
+
+        .card {
+            background: #1e293b;
+            padding: 20px;
+            margin: 12px 0;
+            border-radius: 12px;
+        }
+
+        input, button {
+            padding: 12px;
+            margin: 5px;
+            border: none;
+            border-radius: 8px;
+        }
+
+        input {
+            background: white;
+            color: black;
+        }
+
+        button {
+            background: #22c55e;
+            color: #052e16;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #status { color: #facc15; }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <h1>Football Team Management</h1>
+    <p>9-зертханалық жұмыс — HTTP + Flask + SQLite</p>
+
+    <div class="card">
+        <h2>Жаңа команда қосу</h2>
+
+        <form id="teamForm">
+            <input id="name"
+                   placeholder="Команда атауы"
+                   required>
+
+            <input id="coach"
+                   placeholder="Жаттықтырушы"
+                   required>
+
+            <button type="submit">Қосу</button>
+        </form>
+
+        <p id="status"></p>
+    </div>
+
+    <h2>Командалар тізімі</h2>
+    <div id="teams">Жүктелуде...</div>
+
+</div>
+
+<script>
+    const teamsDiv = document.getElementById("teams");
+    const statusDiv = document.getElementById("status");
+
+    async function loadTeams() {
+        try {
+            const response = await fetch("/api/teams");
+
+            if (!response.ok) {
+                throw new Error("HTTP " + response.status);
+            }
+
+            const teams = await response.json();
+            teamsDiv.replaceChildren();
+
+            teams.forEach(team => {
+                const card = document.createElement("div");
+                card.className = "card";
+
+                const title = document.createElement("h3");
+                title.textContent = team.name;
+
+                const coach = document.createElement("p");
+                coach.textContent = "Жаттықтырушы: " + team.coach;
+
+                card.append(title, coach);
+                teamsDiv.appendChild(card);
+            });
+        } catch (error) {
+            teamsDiv.textContent = "Қате: " + error.message;
+        }
+    }
+
+    document.getElementById("teamForm")
+        .addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const name = document.getElementById("name").value;
+            const coach = document.getElementById("coach").value;
+
+            try {
+                const response = await fetch("/api/teams", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ name, coach })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Команда қосылмады");
+                }
+
+                statusDiv.textContent = "Команда қосылды!";
+                this.reset();
+                await loadTeams();
+            } catch (error) {
+                statusDiv.textContent = error.message;
+            }
+        });
+
+    loadTeams();
+</script>
+
+</body>
+</html>
